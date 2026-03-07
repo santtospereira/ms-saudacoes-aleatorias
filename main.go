@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"os" // Essencial para ler variáveis de ambiente como PORT e DATABASE_URL
+	"os"
 
 	"github.com/avanti-dvp/ms-saudacoes-aleatorias/database"
 	"github.com/avanti-dvp/ms-saudacoes-aleatorias/handlers"
@@ -12,17 +12,29 @@ import (
 )
 
 func main() {
-	// Inicializa a conexão com o banco de dados. 
-	// Lembre-se: sua database.ConnectDatabase() agora deve usar postgres.Open(os.Getenv("DATABASE_URL"))
+	// Inicializa a conexão com o banco de dados PostgreSQL
 	database.ConnectDatabase()
 
 	// Cria um router Gin com as configurações padrão
 	router := gin.Default()
 
-	// Configuração de CORS simplificada para permitir integração com o frontend
+	// Configuração de CORS simplificada
 	router.Use(cors.Default())
 
-	// Define as rotas da API
+	// --- NOVA ROTA RAIZ ---
+	// Resolve o erro "404 page not found" ao acessar o link puro
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status":  "online",
+			"message": "Bem-vindo à API de Saudações Aleatórias, Coimbra!",
+			"endpoints": []string{
+				"/api/saudacoes/aleatorio",
+				"/api/saudacoes",
+			},
+		})
+	})
+
+	// Grupo de rotas da API
 	api := router.Group("/api")
 	{
 		// Rota para cadastrar um novo cumprimento
@@ -32,15 +44,15 @@ func main() {
 		api.GET("/saudacoes/aleatorio", handlers.GetRandomGreeting)
 	}
 
-	// Lógica para detectar a porta do ambiente (Render usa 8080 ou 10000)
+	// Lógica para detectar a porta do ambiente (Render)
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080" // Valor padrão para rodar localmente
+		port = "8080" // Fallback local
 	}
 
 	log.Printf("Iniciando servidor na porta %s...", port)
 
-	// Inicia o servidor na porta correta injetada pelo Render
+	// Inicia o servidor
 	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("Falha ao rodar o servidor: %v", err)
 	}
