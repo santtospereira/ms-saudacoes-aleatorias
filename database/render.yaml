@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ms-saudacoes-aleatorias
+    runtime: docker # Define que usaremos o Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8080 # Porta que definimos anteriormente
+      - key: DATABASE_URL
+        fromDatabase:
+          name: db-saudacoes
+          property: connectionString # Conecta automaticamente ao banco abaixo
+
+databases:
+  - name: db-saudacoes
+    plan: free
+    databaseName: db_saudacoes
+    user: db_saudacoes_user

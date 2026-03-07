@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os" // Essencial para ler variáveis de ambiente como PORT e DATABASE_URL
 
 	"github.com/avanti-dvp/ms-saudacoes-aleatorias/database"
 	"github.com/avanti-dvp/ms-saudacoes-aleatorias/handlers"
@@ -11,39 +12,36 @@ import (
 )
 
 func main() {
-	// Inicializa a conexão com o banco de dados
+	// Inicializa a conexão com o banco de dados. 
+	// Lembre-se: sua database.ConnectDatabase() agora deve usar postgres.Open(os.Getenv("DATABASE_URL"))
 	database.ConnectDatabase()
 
 	// Cria um router Gin com as configurações padrão
 	router := gin.Default()
 
-	// A configuração abaixo permite todas as origens (AllowAllOrigins).
-	// É uma configuração liberal, ideal para APIs públicas.
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"}, // Permite todas as origens
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-	}))
-	// Uma forma ainda mais simples para permitir TODAS as origens é:
-	// router.Use(cors.Default()) // <- Alternativa simples que já permite '*'
+	// Configuração de CORS simplificada para permitir integração com o frontend
+	router.Use(cors.Default())
 
 	// Define as rotas da API
 	api := router.Group("/api")
 	{
 		// Rota para cadastrar um novo cumprimento
-		// Ex: POST /api/saudacoes
 		api.POST("/saudacoes", handlers.CreateGreeting)
 
 		// Rota para obter um cumprimento aleatório
-		// Ex: GET /api/saudacoes/aleatorio
 		api.GET("/saudacoes/aleatorio", handlers.GetRandomGreeting)
 	}
 
-	// Inicia o servidor na porta 8080
-	// Você pode acessar em http://localhost:8080
-	if err := router.Run(":8080"); err != nil {
-		log.Fatalf("failed to run server: %v", err)
+	// Lógica para detectar a porta do ambiente (Render usa 8080 ou 10000)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Valor padrão para rodar localmente
+	}
+
+	log.Printf("Iniciando servidor na porta %s...", port)
+
+	// Inicia o servidor na porta correta injetada pelo Render
+	if err := router.Run(":" + port); err != nil {
+		log.Fatalf("Falha ao rodar o servidor: %v", err)
 	}
 }
