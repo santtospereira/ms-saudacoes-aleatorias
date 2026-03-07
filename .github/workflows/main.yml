@@ -9,7 +9,7 @@ on:
       - main
 
 env:
-  DOCKER_USER: santtospereira
+  DOCKER_USER: camilasanttos
   SERVICE_NAME: saudacoes-aleatorias
 
 jobs:
